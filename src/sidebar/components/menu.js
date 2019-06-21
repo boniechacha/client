@@ -48,10 +48,20 @@ function Menu({
   contentClass,
   defaultOpen = false,
   label,
+  onOpenChanged,
   menuIndicator = true,
   title,
 }) {
   const [isOpen, setOpen] = useState(defaultOpen);
+
+  // Notify parent when menu is opened or closed.
+  const wasOpen = useRef(isOpen);
+  useEffect(() => {
+    if (typeof onOpenChanged === 'function' && wasOpen.current !== isOpen) {
+      wasOpen.current = isOpen;
+      onOpenChanged(isOpen);
+    }
+  }, [isOpen, onOpenChanged]);
 
   // Toggle menu when user presses toggle button. The menu is shown on mouse
   // press for a more responsive/native feel but also handles a click event for
@@ -81,7 +91,6 @@ function Menu({
     if (!isOpen) {
       return () => {};
     }
-
     const removeListeners = listen(
       document.body,
       ['keypress', 'click', 'mousedown'],
@@ -176,6 +185,14 @@ Menu.propTypes = {
    * Whether the menu is open or closed when initially rendered.
    */
   defaultOpen: propTypes.bool,
+
+  /**
+   * Callback invoked when the menu is opened or closed.
+   *
+   * This can be used, for example, to reset any ephemeral state that the
+   * menu content may have.
+   */
+  onOpenChanged: propTypes.func,
 
   /**
    * A title for the menu. This is important for accessibility if the menu's
