@@ -11,3 +11,7 @@ package-lock.json
 .tlskey.pem
 
 .tox
+.idea
+.idea/
+.github
+.github/
