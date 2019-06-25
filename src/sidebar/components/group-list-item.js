@@ -7,6 +7,7 @@ const { useState } = require('preact/hooks');
 const useStore = require('../store/use-store');
 const { orgName } = require('../util/group-list-item-common');
 const { withServices } = require('../util/service-context');
+const { copyText } = require('../util/copy-to-clipboard');
 
 const MenuItem = require('./menu-item');
 
@@ -19,6 +20,7 @@ const MenuItem = require('./menu-item');
 function GroupListItem({
   analytics,
   defaultSubmenuOpen = false,
+  flash,
   group,
   groups: groupsService,
 }) {
@@ -64,13 +66,25 @@ function GroupListItem({
     setExpanded(!isExpanded);
   };
 
+  const copyLink = () => {
+    try {
+      copyText(activityUrl);
+      flash.info(`Copied link for "${group.name}"`);
+    } catch (err) {
+      flash.error('Unable to copy link');
+    }
+  };
+
+  const copyLinkLabel =
+    group.type === 'private' ? 'Copy invite link' : 'Copy activity link';
+
   // Close the submenu when any clicks happen which close the top-level menu.
   const collapseSubmenu = () => setExpanded(false);
 
   return (
     <Fragment>
       <MenuItem
-        icon={group.logo || null}
+        icon={group.logo || 'blank'}
         iconAlt={orgName(group)}
         isDisabled={!isSelectable}
         isExpanded={isExpanded}
@@ -81,15 +95,25 @@ function GroupListItem({
         onToggleSubmenu={toggleSubmenu}
       />
       {isExpanded && (
-        <Fragment>
+        <div className="group-list-item__submenu">
           <ul onClick={collapseSubmenu}>
             {activityUrl && (
               <li>
                 <MenuItem
                   href={activityUrl}
-                  icon="share"
+                  icon="external"
                   isSubmenuItem={true}
                   label="View group activity"
+                />
+              </li>
+            )}
+            {activityUrl && (
+              <li>
+                <MenuItem
+                  onClick={copyLink}
+                  icon="copy"
+                  isSubmenuItem={true}
+                  label={copyLinkLabel}
                 />
               </li>
             )}
@@ -109,7 +133,7 @@ function GroupListItem({
               This group is restricted to specific URLs.
             </p>
           )}
-        </Fragment>
+        </div>
       )}
     </Fragment>
   );
@@ -123,9 +147,10 @@ GroupListItem.propTypes = {
 
   // Injected services.
   analytics: propTypes.object.isRequired,
+  flash: propTypes.object.isRequired,
   groups: propTypes.object.isRequired,
 };
 
-GroupListItem.injectedProps = ['analytics', 'groups'];
+GroupListItem.injectedProps = ['analytics', 'flash', 'groups'];
 
 module.exports = withServices(GroupListItem);

@@ -6,11 +6,12 @@ const propTypes = require('prop-types');
 
 // The list of supported icons
 const icons = {
-  'add-group': require('../../images/icons/add-group.svg'),
+  add: require('../../images/icons/add.svg'),
   'collapse-menu': require('../../images/icons/collapse-menu.svg'),
   'expand-menu': require('../../images/icons/expand-menu.svg'),
   copy: require('../../images/icons/copy.svg'),
   cursor: require('../../images/icons/cursor.svg'),
+  external: require('../../images/icons/external.svg'),
   help: require('../../images/icons/help.svg'),
   leave: require('../../images/icons/leave.svg'),
   refresh: require('../../images/icons/refresh.svg'),
