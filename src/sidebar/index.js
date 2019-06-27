@@ -156,13 +156,17 @@ function startAngularApp(config) {
     )
     .component('annotationThread', require('./components/annotation-thread'))
     .component(
+      'annotationUser',
+      wrapReactComponent(require('./components/annotation-user'))
+    )
+    .component(
       'annotationViewerContent',
       require('./components/annotation-viewer-content')
     )
     .component('excerpt', require('./components/excerpt'))
     .component(
       'groupList',
-      wrapReactComponent(require('./components/group-list-v2'))
+      wrapReactComponent(require('./components/group-list'))
     )
     .component(
       'helpLink',
