@@ -12,7 +12,7 @@ help:
 	@echo "make servetests        Start the unit test server on localhost"
 	@echo "make docs              Build docs website and serve it locally"
 	@echo "make checkdocs         Crash if building the docs website fails"
-	@echo "make clean             Delete development artefacts (cached files, "
+	@echo "make clean             Delete development artefacts (cached files,
 	@echo "                       dependencies, etc)"
 
 .PHONY: dev

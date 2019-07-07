@@ -8,6 +8,8 @@ const serviceConfig = require('../service-config');
 const isNew = annotationMetadata.isNew;
 const isReply = annotationMetadata.isReply;
 const isPageNote = annotationMetadata.isPageNote;
+// const serverUrl = 'http://localhost:8080/api/v1/term';
+const serverUrl = 'https://reqres.in/api/user';
 
 /**
  * Return a copy of `annotation` with changes made in the editor applied.
@@ -49,6 +51,7 @@ function AnnotationController(
   $scope,
   $timeout,
   $window,
+  $http,
   analytics,
   store,
   annotationMapper,
@@ -61,7 +64,7 @@ function AnnotationController(
   serviceUrl,
   session,
   settings,
-  streamer
+  streamer,
 ) {
   const self = this;
   let newlyCreatedByHighlightButton;
@@ -136,6 +139,11 @@ function AnnotationController(
     /** True if the 'Share' dialog for this annotation is currently open. */
     self.showShareDialog = false;
 
+    $scope.candidateTerms = [];
+
+    self.searchQuery = '';
+    self.candidateSelection = [];
+    self.selectedTerms = [];
     /**
      * `true` if this AnnotationController instance was created as a result of
      * the highlight button being clicked.
@@ -158,7 +166,7 @@ function AnnotationController(
     if (!self.annotation.permissions) {
       self.annotation.permissions = permissions.default(
         self.annotation.user,
-        self.annotation.group
+        self.annotation.group,
       );
     }
     self.annotation.text = self.annotation.text || '';
@@ -226,7 +234,7 @@ function AnnotationController(
     return permissions.permits(
       self.annotation.permissions,
       action,
-      session.state.userid
+      session.state.userid,
     );
   };
 
@@ -239,7 +247,7 @@ function AnnotationController(
     if (!session.state.userid) {
       flash.error(
         'You must be logged in to report an annotation to the moderators.',
-        'Login to flag annotations'
+        'Login to flag annotations',
       );
       return;
     }
@@ -287,6 +295,91 @@ function AnnotationController(
     }, true);
   };
 
+  this.searchTerms = function() {
+    self.updateCandidates(self.searchQuery);
+  };
+
+  this.selectedTermsHtml = function() {
+    let str = '<ul>';
+
+    self.selectedTerms.forEach(function(term) {
+      str += '<li ontology-id=' + term.id + ' >' + term.name + '</li>';
+    });
+
+    str += '</ul>';
+
+    return str;
+  };
+
+  this.parseSelectedTerms = function() {
+
+    let parser = new window.DOMParser();
+    let xml = parser.parseFromString(self.state().text, 'text/xml');
+
+
+    let lis = xml.getElementsByTagName('li');
+
+    let terms = [];
+    for (let i = 0; i < lis.length; i++) {
+      terms.push(lis[i].textContent);
+    }
+
+    return terms;
+  };
+
+  this.toggleTermSelection = function(termId) {
+    let term = $scope.candidateTerms.find(t => t.id === termId);
+
+    if (self.selectedTerms.some(t => t.id === term.id)) {
+      self.selectedTerms = self.selectedTerms.filter(t => t.id !== term.id);
+    } else {
+      self.selectedTerms.push(term);
+    }
+
+    if (self.selectedTerms) {
+      self.setText(self.selectedTermsHtml());
+    } else {
+      self.setText('');
+    }
+  };
+
+  // $scope.$on(events.BEFORE_ANNOTATION_CREATED, function(event, annotation) {
+  //   let quotedText = self.extractQuote(annotation);
+  //   quotedText = quotedText.replace(/\s\s+/g, ' ');
+  //
+  //   console.log(quotedText);
+  //   //TODO FETCH FROM THE SERVER
+  //   $scope.candidateTerms.push({ id: quotedText.length, name: quotedText });
+  // });
+
+
+  this.extractQuote = function(annotation) {
+    if (annotation.target.length === 0) {
+      return null;
+    }
+    const target = annotation.target[0];
+    if (!target.selector) {
+      return null;
+    }
+    const quoteSel = target.selector.find(function(sel) {
+      return sel.type === 'TextQuoteSelector';
+    });
+    return quoteSel ? quoteSel.exact : null;
+  };
+
+  self.updateCandidates = function(query) {
+    if (query) {
+      $http.get(serverUrl, {
+        params: {
+          query: query,
+        },
+      }).then(function(response) {
+        console.log(response.config);
+        $scope.candidateTerms = response.data.data;
+      });
+    }
+
+  };
   /**
    * @ngdoc method
    * @name annotation.AnnotationController#edit
@@ -296,6 +389,12 @@ function AnnotationController(
     if (!drafts.get(self.annotation)) {
       drafts.update(self.annotation, self.state());
     }
+
+    let quotedText = self.extractQuote(self.annotation);
+    quotedText = quotedText.replace(/\s\s+/g, ' ');
+
+    self.updateCandidates(quotedText);
+
   };
 
   /**
@@ -324,7 +423,8 @@ function AnnotationController(
    *   otherwise.
    */
   this.hasContent = function() {
-    return self.state().text.length > 0 || self.state().tags.length > 0;
+    // return self.state().text.length > 0 || self.state().tags.length > 0;
+    return self.state().text.length > 0;
   };
 
   /**
@@ -406,7 +506,7 @@ function AnnotationController(
    */
   this.reply = function() {
     const references = (self.annotation.references || []).concat(
-      self.annotation.id
+      self.annotation.id,
     );
     const group = self.annotation.group;
     let replyPermissions;
@@ -450,7 +550,7 @@ function AnnotationController(
     const updatedModel = updateModel(
       self.annotation,
       self.state(),
-      permissions
+      permissions,
     );
 
     // Optimistically switch back to view mode and display the saving
@@ -596,7 +696,7 @@ function AnnotationController(
       text: self.annotation.text,
       isPrivate: !permissions.isShared(
         self.annotation.permissions,
-        self.annotation.user
+        self.annotation.user,
       ),
     };
   };
