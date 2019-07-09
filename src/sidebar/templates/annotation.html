@@ -55,11 +55,17 @@
                 <div class="ontology-editor"
                      ng-show="vm.editing()&&!vm.isReply()">
 
-                    <ol>
+                    <ul>
                         <li ng-repeat="term in vm.selectedTerms">
+                            <annotation-action-button
+                                    icon="'h-icon-remove'"
+                                    label="'Remove'"
+                                    is-disabled="vm.isDeleted()"
+                                    on-click="vm.removeTermSelection(term.name)"
+                            ></annotation-action-button>
                             <b>{{term.name}}</b>
                         </li>
-                    </ol>
+                    </ul>
 
                     <input type="text"
                            placeholder="Suggest term ..."
@@ -70,8 +76,8 @@
 
                     <div ng-repeat="candidate in candidateTerms track by $index">
                         <input type="checkbox"
-                               ng-model="vm.candidateSelection[$index]"
-                               ng-change="vm.toggleTermSelection(candidate.id)">
+                               ng-model="vm.candidateSelection[candidate.name]"
+                               ng-change="vm.toggleTermSelection(candidate.name)">
 
                         <span>
                             {{candidate.name}}
@@ -83,7 +89,7 @@
                 <div ng-show="!vm.editing()">
 
                     <ul>
-                        <li ng-repeat="term in vm.parseSelectedTerms()" class="ng-binding ng-scope">{{term}}</li>
+                        <li ng-repeat="term in vm.selectedTerms" class="ng-binding ng-scope">{{term.name}}</li>
                     </ul>
 
                 </div>

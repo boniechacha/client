@@ -9,7 +9,7 @@ const isNew = annotationMetadata.isNew;
 const isReply = annotationMetadata.isReply;
 const isPageNote = annotationMetadata.isPageNote;
 // const serverUrl = 'http://localhost:8080/api/v1/term';
-const serverUrl = 'http://localhost:8080/term';
+const serverUrl = 'http://localhost:8080/api/v1/term';
 
 /**
  * Return a copy of `annotation` with changes made in the editor applied.
@@ -189,6 +189,8 @@ function AnnotationController(
         self.edit();
       }
     }
+
+    self.loadSelectedTerms();
   };
 
   /** Save this annotation if it's a new highlight.
@@ -303,7 +305,8 @@ function AnnotationController(
     let str = '<ul>';
 
     self.selectedTerms.forEach(function(term) {
-      str += '<li ontology-id="' + term.id + '" >' + term.name + '</li>';
+      // str += '<li ontology-id="' + term.id + '" >' + term.name + '</li>';
+      str += '<li>' + term.name + '</li>';
     });
 
     str += '</ul>';
@@ -311,7 +314,7 @@ function AnnotationController(
     return str;
   };
 
-  this.parseSelectedTerms = function() {
+  this.parseSelectedTermNames = function() {
 
     let parser = new window.DOMParser();
     let xml = parser.parseFromString(self.state().text, 'text/xml');
@@ -327,11 +330,11 @@ function AnnotationController(
     return terms;
   };
 
-  this.toggleTermSelection = function(termId) {
-    let term = $scope.candidateTerms.find(t => t.id === termId);
+  this.toggleTermSelection = function(termName) {
+    let term = $scope.candidateTerms.find(t => t.name === termName);
 
-    if (self.selectedTerms.some(t => t.id === term.id)) {
-      self.selectedTerms = self.selectedTerms.filter(t => t.id !== term.id);
+    if (self.selectedTerms.some(t => t.name === term.name)) {
+      self.selectedTerms = self.selectedTerms.filter(t => t.name !== term.name);
     } else {
       self.selectedTerms.push(term);
     }
@@ -341,6 +344,11 @@ function AnnotationController(
     } else {
       self.setText('');
     }
+  };
+
+  this.removeTermSelection = function(termName) {
+    self.selectedTerms = self.selectedTerms.filter(t => t.name !== termName);
+    self.candidateSelection[termName]=false;
   };
 
   // $scope.$on(events.BEFORE_ANNOTATION_CREATED, function(event, annotation) {
@@ -369,7 +377,7 @@ function AnnotationController(
 
   self.updateCandidates = function(query) {
     if (query) {
-      $http.get(serverUrl, {
+      $http.get(serverUrl+'/search', {
         params: {
           q: query,
         },
@@ -377,6 +385,21 @@ function AnnotationController(
         $scope.candidateTerms = response.data.content;
       });
     }
+
+  };
+
+
+  self.loadSelectedTerms = function() {
+
+      $http.get(serverUrl+'/list', {
+        params: {
+          name: self.parseSelectedTermNames(),
+        },
+      }).then(function(response) {
+        self.selectedTerms = response.data;
+
+        self.selectedTerms.forEach(term => self.candidateSelection[term.name]=true );
+      });
 
   };
   /**
@@ -393,7 +416,7 @@ function AnnotationController(
     quotedText = quotedText.replace(/\s\s+/g, ' ');
 
     self.updateCandidates(quotedText);
-
+    self.loadSelectedTerms();
   };
 
   /**
