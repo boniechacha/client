@@ -9,7 +9,7 @@ const isNew = annotationMetadata.isNew;
 const isReply = annotationMetadata.isReply;
 const isPageNote = annotationMetadata.isPageNote;
 // const serverUrl = 'http://localhost:8080/api/v1/term';
-const serverUrl = 'https://reqres.in/api/user';
+const serverUrl = 'http://localhost:8080/term';
 
 /**
  * Return a copy of `annotation` with changes made in the editor applied.
@@ -303,7 +303,7 @@ function AnnotationController(
     let str = '<ul>';
 
     self.selectedTerms.forEach(function(term) {
-      str += '<li ontology-id=' + term.id + ' >' + term.name + '</li>';
+      str += '<li ontology-id="' + term.id + '" >' + term.name + '</li>';
     });
 
     str += '</ul>';
@@ -371,11 +371,10 @@ function AnnotationController(
     if (query) {
       $http.get(serverUrl, {
         params: {
-          query: query,
+          q: query,
         },
       }).then(function(response) {
-        console.log(response.config);
-        $scope.candidateTerms = response.data.data;
+        $scope.candidateTerms = response.data.content;
       });
     }
 
