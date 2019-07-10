@@ -8,8 +8,6 @@ const serviceConfig = require('../service-config');
 const isNew = annotationMetadata.isNew;
 const isReply = annotationMetadata.isReply;
 const isPageNote = annotationMetadata.isPageNote;
-// const serverUrl = 'http://localhost:8080/api/v1/term';
-const serverUrl = 'http://localhost:8080/api/v1/term';
 
 /**
  * Return a copy of `annotation` with changes made in the editor applied.
@@ -377,7 +375,7 @@ function AnnotationController(
 
   self.updateCandidates = function(query) {
     if (query) {
-      $http.get(serverUrl+'/search', {
+      $http.get(settings.termsApiUrl+'/search', {
         params: {
           q: query,
         },
@@ -391,7 +389,7 @@ function AnnotationController(
 
   self.loadSelectedTerms = function() {
 
-      $http.get(serverUrl+'/list', {
+      $http.get(settings.termsApiUrl+'/list', {
         params: {
           name: self.parseSelectedTermNames(),
         },
