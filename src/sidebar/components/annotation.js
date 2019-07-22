@@ -69,6 +69,10 @@ function AnnotationController(
 
   const enableShareLinks = shouldEnableShareLinks(settings);
 
+  if(!settings.termsApiUrl){
+    console.warn('setting the terms api url to use dev server');
+    settings.termsApiUrl = 'http://localhost:8080/api/v1/term';
+  }
   /** Save an annotation to the server. */
   function save(annot) {
     let saved;
@@ -303,8 +307,8 @@ function AnnotationController(
     let str = '<ul>';
 
     self.selectedTerms.forEach(function(term) {
-      // str += '<li ontology-id="' + term.id + '" >' + term.name + '</li>';
-      str += '<li>' + term.name + '</li>';
+      str += '<li term="' + term.id + '" >' + term.name + '</li>';
+      // str += '<li>' + term.name + '</li>';
     });
 
     str += '</ul>';
@@ -374,6 +378,7 @@ function AnnotationController(
   };
 
   self.updateCandidates = function(query) {
+
     if (query) {
       $http.get(settings.termsApiUrl+'/search', {
         params: {
