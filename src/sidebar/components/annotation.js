@@ -69,10 +69,11 @@ function AnnotationController(
 
   const enableShareLinks = shouldEnableShareLinks(settings);
 
-  if(!settings.termsApiUrl){
+  if (!settings.termsApiUrl) {
     console.warn('setting the terms api url to use dev server');
     settings.termsApiUrl = 'http://localhost:8080/api/v1/term';
   }
+
   /** Save an annotation to the server. */
   function save(annot) {
     let saved;
@@ -144,6 +145,8 @@ function AnnotationController(
     $scope.candidateTerms = [];
 
     self.searchQuery = '';
+    self.searchNamespace = 'ALL';
+    self.namespaces = [];
     self.candidateSelection = [];
     self.selectedTerms = [];
     /**
@@ -193,6 +196,7 @@ function AnnotationController(
     }
 
     self.loadSelectedTerms();
+    self.loadNamespaces();
   };
 
   /** Save this annotation if it's a new highlight.
@@ -299,24 +303,33 @@ function AnnotationController(
     }, true);
   };
 
-  this.searchTerms = function() {
-    self.updateCandidates(self.searchQuery);
+
+  this.loadNamespaces = function() {
+    $http.get(settings.termsApiUrl + '/namespace')
+      .then(function(response) {
+        self.namespaces = ['ALL', ...response.data];
+      });
+
+    let savedNs = sessionStorage.getItem('searchNamespace');
+    if(savedNs) {
+      self.searchNamespace = savedNs;
+    }
   };
 
   this.selectedTermsHtml = function() {
     let str = '<ul>';
 
     self.selectedTerms.forEach(function(term) {
-      str += '<li term="' + term.id + '" >' + term.name + '</li>';
-      // str += '<li>' + term.name + '</li>';
+      str += `<li term="${term.id}" namespace="${term.namespace}" >${term.name}</li>`;
     });
 
     str += '</ul>';
 
     return str;
+
   };
 
-  this.parseSelectedTermNames = function() {
+  this.parseSelectedTerms = function() {
 
     let parser = new window.DOMParser();
     let xml = parser.parseFromString(self.state().text, 'text/xml');
@@ -326,42 +339,49 @@ function AnnotationController(
 
     let terms = [];
     for (let i = 0; i < lis.length; i++) {
-      terms.push(lis[i].textContent);
+      terms.push(lis[i].getAttribute('term'));
     }
 
     return terms;
   };
 
-  this.toggleTermSelection = function(termName) {
-    let term = $scope.candidateTerms.find(t => t.name === termName);
+  this.toggleTermSelection = function(termId) {
 
-    if (self.selectedTerms.some(t => t.name === term.name)) {
-      self.selectedTerms = self.selectedTerms.filter(t => t.name !== term.name);
+    if (self.candidateSelection[termId]) {
+      self.addTermSelection(termId);
     } else {
-      self.selectedTerms.push(term);
+      self.removeTermSelection(termId);
     }
+  };
 
+  this.addTermSelection = function(termId) {
+    let term = $scope.candidateTerms.find(t => t.id === termId);
+    self.selectedTerms.push(term);
+
+    // ensure that the selection for checkbox is also marked true incase the addition is called from different button
+    // than the checkbox
+    self.candidateSelection[termId] = true;
+
+    self.updateAnnotationText();
+  };
+
+  this.removeTermSelection = function(termId) {
+    self.selectedTerms = self.selectedTerms.filter(t => t.id !== termId);
+
+    // ensure that the selection for checkbox is also marked false incase the remove is called from different button
+    // than the checkbox
+    self.candidateSelection[termId] = false;
+
+    self.updateAnnotationText();
+  };
+
+  this.updateAnnotationText = function() {
     if (self.selectedTerms) {
       self.setText(self.selectedTermsHtml());
     } else {
       self.setText('');
     }
   };
-
-  this.removeTermSelection = function(termName) {
-    self.selectedTerms = self.selectedTerms.filter(t => t.name !== termName);
-    self.candidateSelection[termName]=false;
-  };
-
-  // $scope.$on(events.BEFORE_ANNOTATION_CREATED, function(event, annotation) {
-  //   let quotedText = self.extractQuote(annotation);
-  //   quotedText = quotedText.replace(/\s\s+/g, ' ');
-  //
-  //   console.log(quotedText);
-  //   //TODO FETCH FROM THE SERVER
-  //   $scope.candidateTerms.push({ id: quotedText.length, name: quotedText });
-  // });
-
 
   this.extractQuote = function(annotation) {
     if (annotation.target.length === 0) {
@@ -377,12 +397,16 @@ function AnnotationController(
     return quoteSel ? quoteSel.exact : null;
   };
 
-  self.updateCandidates = function(query) {
+  this.updateCandidates = function(query) {
 
     if (query) {
-      $http.get(settings.termsApiUrl+'/search', {
+
+      $http.get(settings.termsApiUrl + '/search', {
         params: {
           q: query,
+
+          //if the value for namespace is ALL then pass nothing in the query
+          namespace: self.searchNamespace=== 'ALL' ? null : self.searchNamespace,
         },
       }).then(function(response) {
         $scope.candidateTerms = response.data.content;
@@ -391,18 +415,41 @@ function AnnotationController(
 
   };
 
+  this.searchByQuery = function() {
+    self.updateCandidates(self.searchQuery);
+  };
 
-  self.loadSelectedTerms = function() {
+  this.onNamespaceChange = function() {
+    if (self.searchQuery) {
+      self.searchByQuery();
+    } else {
+      self.searchByQuote();
+    }
 
-      $http.get(settings.termsApiUrl+'/list', {
+    sessionStorage.setItem('searchNamespace', self.searchNamespace);
+  };
+
+  this.searchByQuote = function() {
+    let quotedText = self.extractQuote(self.annotation);
+    quotedText = quotedText.replace(/\s\s+/g, ' ');
+
+    self.updateCandidates(quotedText);
+  };
+
+  this.loadSelectedTerms = function() {
+
+    let ids = self.parseSelectedTerms();
+
+    if (ids.length) {
+      $http.get(settings.termsApiUrl + '/list', {
         params: {
-          name: self.parseSelectedTermNames(),
+          id: ids,
         },
       }).then(function(response) {
         self.selectedTerms = response.data;
-
-        self.selectedTerms.forEach(term => self.candidateSelection[term.name]=true );
+        self.selectedTerms.forEach(term => self.candidateSelection[term.id] = true);
       });
+    }
 
   };
   /**
@@ -415,10 +462,7 @@ function AnnotationController(
       drafts.update(self.annotation, self.state());
     }
 
-    let quotedText = self.extractQuote(self.annotation);
-    quotedText = quotedText.replace(/\s\s+/g, ' ');
-
-    self.updateCandidates(quotedText);
+    self.searchByQuote();
     self.loadSelectedTerms();
   };
 

@@ -61,23 +61,29 @@
                                     icon="'h-icon-remove'"
                                     label="'Remove'"
                                     is-disabled="vm.isDeleted()"
-                                    on-click="vm.removeTermSelection(term.name)"
+                                    on-click="vm.removeTermSelection(term.id)"
                             ></annotation-action-button>
                             <b>{{term.name}}</b>
                         </li>
                     </ul>
+
+                    <select class="annotation-body form-field search-ontology"
+                            ng-options="ns for ns in vm.namespaces"
+                            ng-model="vm.searchNamespace"
+                            ng-change="vm.onNamespaceChange()">
+                    </select>
 
                     <input type="text"
                            placeholder="Suggest term ..."
                            class="annotation-body form-field search-ontology"
                            ng-model="vm.searchQuery"
                            ng-model-options='{ debounce: 1000 }'
-                           ng-change='vm.searchTerms()'>
+                           ng-change='vm.searchByQuery()'>
 
                     <div ng-repeat="candidate in candidateTerms track by $index">
                         <input type="checkbox"
-                               ng-model="vm.candidateSelection[candidate.name]"
-                               ng-change="vm.toggleTermSelection(candidate.name)">
+                               ng-model="vm.candidateSelection[candidate.id]"
+                               ng-change="vm.toggleTermSelection(candidate.id)">
 
                         <span>
                             {{candidate.name}}
@@ -89,7 +95,7 @@
                 <div ng-show="!vm.editing()">
 
                     <ul>
-                        <li ng-repeat="term in vm.selectedTerms" class="ng-binding ng-scope">{{term.name}}</li>
+                        <li ng-repeat="term in vm.selectedTerms" class="ng-binding ng-scope" ng-dblclick="vm.edit()">{{term.name}}</li>
                     </ul>
 
                 </div>
