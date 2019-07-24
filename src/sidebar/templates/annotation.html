@@ -112,11 +112,21 @@
 
                 <div ng-show="!vm.editing()">
 
-                    <ul>
+                    <ol>
                         <li ng-repeat="term in vm.selectedTerms" class="ng-binding ng-scope" ng-dblclick="vm.edit()">
-                            {{term.name}}
+                            <div class="term-candidate">
+                                <div>
+                                    <div class="term-name">
+                                        <span>{{term.name}}</span>
+                                    </div>
+                                    <div class="term-namespace">
+                                        <span>{{term.id}}|{{term.namespace}}</span>
+                                    </div>
+                                </div>
+                            </div>
+
                         </li>
-                    </ul>
+                    </ol>
 
                 </div>
 
