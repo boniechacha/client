@@ -54,19 +54,6 @@
 
                 <div class="ontology-editor"
                      ng-show="vm.editing()&&vm.isTermAnnotation()">
-
-                    <!--                    <ul>-->
-                    <!--                        <li ng-repeat="term in vm.selectedTerms">-->
-                    <!--                            <annotation-action-button-->
-                    <!--                                    icon="'h-icon-remove'"-->
-                    <!--                                    label="'Remove'"-->
-                    <!--                                    is-disabled="vm.isDeleted()"-->
-                    <!--                                    on-click="vm.removeTermSelection(term.id)"-->
-                    <!--                            ></annotation-action-button>-->
-                    <!--                            <b>{{term.name}}</b>-->
-                    <!--                        </li>-->
-                    <!--                    </ul>-->
-
                     <div ng-repeat="term in vm.selectedTerms">
 
                         <div class="term-candidate">
