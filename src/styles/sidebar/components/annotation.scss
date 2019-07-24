@@ -266,3 +266,27 @@
   color: $brand-color;
   cursor: default;
 }
+
+.term-candidate .term-input {
+  float: left;
+  margin-top: 3px;
+}
+
+.term-candidate div {
+  display: block;
+  margin-left: 10px;
+}
+
+.term-namespace{
+  text-align: right;
+  font-size: 10px;
+  margin-right: 10px;
+}
+
+.term-namespace span{
+  text-decoration: none;
+  border: 1px solid #d3d3d3;
+  padding: 0.1818em 0.4545em;
+  color: #969696;
+  background: #f9f9f9;
+}

@@ -311,7 +311,7 @@ function AnnotationController(
       });
 
     let savedNs = sessionStorage.getItem('searchNamespace');
-    if(savedNs) {
+    if (savedNs) {
       self.searchNamespace = savedNs;
     }
   };
@@ -327,6 +327,21 @@ function AnnotationController(
 
     return str;
 
+  };
+
+  this.selectedTermsTags = function() {
+    //return a list of distinct tags
+    return [...new Set(self.selectedTerms.map(term => term.namespace))];
+  };
+
+  this.updateAnnotation = function() {
+    if (self.selectedTerms) {
+      self.setText(self.selectedTermsHtml());
+      self.setTags(self.selectedTermsTags());
+    } else {
+      self.setText('');
+      self.setTags([]);
+    }
   };
 
   this.parseSelectedTerms = function() {
@@ -362,7 +377,7 @@ function AnnotationController(
     // than the checkbox
     self.candidateSelection[termId] = true;
 
-    self.updateAnnotationText();
+    self.updateAnnotation();
   };
 
   this.removeTermSelection = function(termId) {
@@ -372,15 +387,7 @@ function AnnotationController(
     // than the checkbox
     self.candidateSelection[termId] = false;
 
-    self.updateAnnotationText();
-  };
-
-  this.updateAnnotationText = function() {
-    if (self.selectedTerms) {
-      self.setText(self.selectedTermsHtml());
-    } else {
-      self.setText('');
-    }
+    self.updateAnnotation();
   };
 
   this.extractQuote = function(annotation) {
@@ -406,13 +413,24 @@ function AnnotationController(
           q: query,
 
           //if the value for namespace is ALL then pass nothing in the query
-          namespace: self.searchNamespace=== 'ALL' ? null : self.searchNamespace,
+          namespace: self.searchNamespace === 'ALL' ? null : self.searchNamespace,
         },
       }).then(function(response) {
         $scope.candidateTerms = response.data.content;
       });
     }
 
+  };
+
+  /**
+   * Search by the query text if available otherwise use the quoted text
+   */
+  this.search = function() {
+    if (self.searchQuery) {
+      self.searchByQuery();
+    } else {
+      self.searchByQuote();
+    }
   };
 
   this.searchByQuery = function() {
@@ -713,6 +731,14 @@ function AnnotationController(
 
   this.isReply = function() {
     return isReply(self.annotation);
+  };
+
+  this.isPageNote = function() {
+    return isPageNote(self.annotation);
+  };
+
+  this.isTermAnnotation = function() {
+    return !self.isPageNote() && !self.isReply();
   };
 
   this.incontextLink = function() {

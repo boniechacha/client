@@ -41,7 +41,7 @@
 
 
             <div class="markdown"
-                 ng-show="vm.isReply()">
+                 ng-show="!vm.isTermAnnotation()">
                 <markdown text="vm.state().text"
                           custom-text-class="{'annotation-body is-hidden':vm.isHiddenByModerator(),
                                                 'has-content':vm.hasContent()}"
@@ -53,19 +53,41 @@
             <div class="ontology">
 
                 <div class="ontology-editor"
-                     ng-show="vm.editing()&&!vm.isReply()">
+                     ng-show="vm.editing()&&vm.isTermAnnotation()">
 
-                    <ul>
-                        <li ng-repeat="term in vm.selectedTerms">
+                    <!--                    <ul>-->
+                    <!--                        <li ng-repeat="term in vm.selectedTerms">-->
+                    <!--                            <annotation-action-button-->
+                    <!--                                    icon="'h-icon-remove'"-->
+                    <!--                                    label="'Remove'"-->
+                    <!--                                    is-disabled="vm.isDeleted()"-->
+                    <!--                                    on-click="vm.removeTermSelection(term.id)"-->
+                    <!--                            ></annotation-action-button>-->
+                    <!--                            <b>{{term.name}}</b>-->
+                    <!--                        </li>-->
+                    <!--                    </ul>-->
+
+                    <div ng-repeat="term in vm.selectedTerms">
+
+                        <div class="term-candidate">
                             <annotation-action-button
+                                    class="term-input"
                                     icon="'h-icon-remove'"
                                     label="'Remove'"
                                     is-disabled="vm.isDeleted()"
                                     on-click="vm.removeTermSelection(term.id)"
                             ></annotation-action-button>
-                            <b>{{term.name}}</b>
-                        </li>
-                    </ul>
+
+                            <div>
+                                <div class="term-name">
+                                    <span><b>{{term.name}}</b></span>
+                                </div>
+                                <div class="term-namespace">
+                                    <span>{{term.id}}|{{term.namespace}}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <select class="annotation-body form-field search-ontology"
                             ng-options="ns for ns in vm.namespaces"
@@ -78,16 +100,25 @@
                            class="annotation-body form-field search-ontology"
                            ng-model="vm.searchQuery"
                            ng-model-options='{ debounce: 1000 }'
-                           ng-change='vm.searchByQuery()'>
+                           ng-change='vm.search()'>
 
                     <div ng-repeat="candidate in candidateTerms track by $index">
-                        <input type="checkbox"
-                               ng-model="vm.candidateSelection[candidate.id]"
-                               ng-change="vm.toggleTermSelection(candidate.id)">
 
-                        <span>
-                            {{candidate.name}}
-                        </span>
+                        <div class="term-candidate">
+                            <input type="checkbox"
+                                   class="term-input"
+                                   ng-model="vm.candidateSelection[candidate.id]"
+                                   ng-change="vm.toggleTermSelection(candidate.id)">
+
+                            <div>
+                                <div class="term-name">
+                                    <span>{{candidate.name}}</span>
+                                </div>
+                                <div class="term-namespace">
+                                    <span>{{candidate.id}}|{{candidate.namespace}}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -95,14 +126,15 @@
                 <div ng-show="!vm.editing()">
 
                     <ul>
-                        <li ng-repeat="term in vm.selectedTerms" class="ng-binding ng-scope" ng-dblclick="vm.edit()">{{term.name}}</li>
+                        <li ng-repeat="term in vm.selectedTerms" class="ng-binding ng-scope" ng-dblclick="vm.edit()">
+                            {{term.name}}
+                        </li>
                     </ul>
 
                 </div>
 
             </div>
         </excerpt>
-
     </section>
     <!-- / Body -->
 
