@@ -438,12 +438,7 @@ function AnnotationController(
   };
 
   this.onNamespaceChange = function() {
-    if (self.searchQuery) {
-      self.searchByQuery();
-    } else {
-      self.searchByQuote();
-    }
-
+    self.search();
     sessionStorage.setItem('searchNamespace', self.searchNamespace);
   };
 
